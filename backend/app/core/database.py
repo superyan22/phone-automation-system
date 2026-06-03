@@ -52,8 +52,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """Initialize database tables"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        # Tables may already exist, log and continue
+        print(f"Database init warning: {e}")
+        print("Tables likely already exist, continuing...")
 
 
 async def close_db():

@@ -16,6 +16,7 @@ interface DeviceState {
 
   // Actions
   fetchDevices: (params?: any) => Promise<void>;
+  scanDevices: (scanType?: string) => Promise<void>;
   selectDevice: (serial: string) => void;
   connectDevice: (serial: string) => Promise<void>;
   disconnectDevice: (serial: string) => Promise<void>;
@@ -40,6 +41,20 @@ export const useDeviceStore = create<DeviceState>()(
           try {
             const response = await apiService.getDevices(params);
             set({ devices: response.items, isLoading: false });
+          } catch (error: any) {
+            set({
+              error: error.response?.data?.detail || error.message,
+              isLoading: false,
+            });
+          }
+        },
+
+        // Scan devices
+        scanDevices: async (scanType = 'all') => {
+          set({ isLoading: true, error: null });
+          try {
+            const devices = await apiService.scanDevices(scanType);
+            set({ devices: devices || [], isLoading: false });
           } catch (error: any) {
             set({
               error: error.response?.data?.detail || error.message,

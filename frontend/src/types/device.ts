@@ -2,6 +2,8 @@
  * Device types
  */
 
+export type DeviceStatus = 'online' | 'offline' | 'busy' | 'error';
+
 export interface Device {
   id: number;
   serial: string;
@@ -14,7 +16,7 @@ export interface Device {
   screen_width?: number;
   screen_height?: number;
   screen_density: number;
-  status: 'online' | 'offline' | 'busy' | 'error';
+  status: DeviceStatus;
   is_connected: boolean;
   last_heartbeat?: string;
   config: Record<string, any>;

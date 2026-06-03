@@ -11,11 +11,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install scrcpy (optional, for real-time screen streaming)
-RUN apt-get update && apt-get install -y \
-    scrcpy \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+# Note: scrcpy is optional and not available in Debian repos
+# Install via pip if needed: pip install scrcpy
 
 # Copy requirements file
 COPY requirements.txt .
