@@ -8,6 +8,7 @@ import uvicorn
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.services.adb_manager import adb_manager
 
 
 @asynccontextmanager
@@ -22,10 +23,16 @@ async def lifespan(app: FastAPI):
     await init_db()
     print("Database initialized")
     
+    # Start ADB Manager
+    await adb_manager.start()
+    print("ADB Manager started")
+    
     yield
     
     # Shutdown
     print("Shutting down...")
+    await adb_manager.stop()
+    print("ADB Manager stopped")
     await close_db()
     print("Database connections closed")
 
@@ -65,10 +72,11 @@ async def health():
 
 
 # Import and include routers
-from app.api.routes import devices, tasks
+from app.api.routes import devices, tasks, websocket
 
 app.include_router(devices.router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
+app.include_router(websocket.router)
 
 
 if __name__ == "__main__":
