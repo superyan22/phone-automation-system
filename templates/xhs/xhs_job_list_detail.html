@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            width: 1080px; 
+            height: 1440px; 
+            background: white;
+            font-family: 'Microsoft YaHei', sans-serif;
+            padding: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+        }
+        .subtitle {
+            font-size: 28px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .job-list {
+            margin-top: 30px;
+        }
+        .job-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 28px;
+        }
+        .job-name {
+            color: #333;
+            font-weight: bold;
+        }
+        .job-count {
+            color: #666;
+        }
+        .footer {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            text-align: center;
+            font-size: 24px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">岗位详情</div>
+        <div class="subtitle">{{source}} - {{date}}</div>
+    </div>
+    <div class="job-list">
+        <div class="job-item">
+            <span class="job-name">综合岗</span>
+            <span class="job-count">5人</span>
+        </div>
+        <div class="job-item">
+            <span class="job-name">技术岗</span>
+            <span class="job-count">10人</span>
+        </div>
+        <div class="job-item">
+            <span class="job-name">管理岗</span>
+            <span class="job-count">15人</span>
+        </div>
+    </div>
+    <div class="footer">详情请查看原文链接</div>
+</body>
+</html>

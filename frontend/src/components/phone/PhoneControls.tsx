@@ -14,6 +14,7 @@ import {
 
 interface PhoneControlsProps {
   serial: string;
+  apiKey: string;
 }
 
 const PHONE_KEYS = {
@@ -35,7 +36,7 @@ const QUICK_APPS = [
   { name: 'File Manager', package: 'com.android.filemanager', icon: '📁' },
 ];
 
-const PhoneControls: React.FC<PhoneControlsProps> = ({ serial }) => {
+const PhoneControls: React.FC<PhoneControlsProps> = ({ serial, apiKey }) => {
   // Text input
   const [textInput, setTextInput] = useState('');
   const [textLoading, setTextLoading] = useState(false);

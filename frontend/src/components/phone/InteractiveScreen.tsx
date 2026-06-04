@@ -10,12 +10,14 @@ interface InteractiveScreenProps {
   serial: string;
   deviceWidth: number;
   deviceHeight: number;
+  apiKey: string;
 }
 
 const InteractiveScreen: React.FC<InteractiveScreenProps> = ({
   serial,
   deviceWidth,
   deviceHeight,
+  apiKey,
 }) => {
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -130,11 +130,11 @@ class ApiService {
     return response.data;
   }
 
-  async deleteTask(taskId: string): Promise<void> {
+  async deleteTask(taskId: string | number): Promise<void> {
     await this.api.delete(`/tasks/${taskId}`);
   }
 
-  async startTask(taskId: string): Promise<{ success: boolean; message: string }> {
+  async startTask(taskId: string | number): Promise<{ success: boolean; message: string }> {
     const response = await this.api.post(`/tasks/${taskId}/start`);
     return response.data;
   }
@@ -149,7 +149,7 @@ class ApiService {
     return response.data;
   }
 
-  async cancelTask(taskId: string): Promise<{ success: boolean; message: string }> {
+  async cancelTask(taskId: string | number): Promise<{ success: boolean; message: string }> {
     const response = await this.api.post(`/tasks/${taskId}/cancel`);
     return response.data;
   }

@@ -1,5 +1,5 @@
 /**
- * Phone Control API Service
+ * Phone Control API Service - Chinese Version
  * Direct phone interaction functions (tap, swipe, type, etc.)
  */
 
@@ -15,12 +15,12 @@ const phoneApiInstance: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor
+// Request interceptor - add API key
 phoneApiInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const apiKey = localStorage.getItem('phone_auto_api_key');
+    if (apiKey) {
+      config.headers['X-API-Key'] = apiKey;
     }
     return config;
   },

@@ -1,5 +1,5 @@
 /**
- * Phone Control Page
+ * Phone Control Page - Chinese Version
  * Device selector + interactive screen + controls
  */
 
@@ -9,7 +9,11 @@ import { Device } from '../../types/device';
 import InteractiveScreen from '../../components/phone/InteractiveScreen';
 import PhoneControls from '../../components/phone/PhoneControls';
 
-const PhonePage: React.FC = () => {
+interface PhonePageProps {
+  apiKey: string;
+}
+
+const PhonePage: React.FC<PhonePageProps> = ({ apiKey }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedSerial, setSelectedSerial] = useState<string>('');
   const [loadingDevices, setLoadingDevices] = useState(true);
@@ -27,7 +31,7 @@ const PhonePage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Failed to fetch devices:', err);
-      setDeviceError(err.message || 'Failed to load devices');
+      setDeviceError(err.message || '加载设备失败');
     } finally {
       setLoadingDevices(false);
     }
@@ -43,9 +47,9 @@ const PhonePage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Phone Control</h1>
+        <h1 className="text-2xl font-bold text-gray-900">📱 手机控制</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Interact with your connected device in real-time
+          实时交互控制您的设备
         </p>
       </div>
 
@@ -55,7 +59,7 @@ const PhonePage: React.FC = () => {
           {/* Device dropdown */}
           <div className="flex-1">
             <label className="block text-xs font-medium text-gray-500 mb-1">
-              Select Device
+              选择设备
             </label>
             <select
               value={selectedSerial}
@@ -63,9 +67,9 @@ const PhonePage: React.FC = () => {
               disabled={loadingDevices}
               className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
             >
-              {loadingDevices && <option>Loading devices...</option>}
+              {loadingDevices && <option>加载设备中...</option>}
               {!loadingDevices && devices.length === 0 && (
-                <option>No devices found</option>
+                <option>未找到设备</option>
               )}
               {devices.map((device) => (
                 <option key={device.serial} value={device.serial}>
@@ -94,7 +98,7 @@ const PhonePage: React.FC = () => {
                     : 'bg-red-100 text-red-800'
                 }`}
               >
-                {selectedDevice.status}
+                {selectedDevice.status === 'online' ? '在线' : selectedDevice.status === 'busy' ? '忙碌' : '离线'}
               </span>
               {selectedDevice.android_version && (
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
@@ -113,7 +117,7 @@ const PhonePage: React.FC = () => {
                     : 'bg-gray-100 text-gray-500'
                 }`}
               >
-                {selectedDevice.is_connected ? '🔗 Connected' : '⛓ Disconnected'}
+                {selectedDevice.is_connected ? '🔗 已连接' : '⛓ 未连接'}
               </span>
             </div>
           )}
@@ -129,26 +133,27 @@ const PhonePage: React.FC = () => {
               serial={selectedSerial}
               deviceWidth={selectedDevice?.screen_width || 1080}
               deviceHeight={selectedDevice?.screen_height || 2340}
+              apiKey={apiKey}
             />
           </div>
 
           {/* Controls (40% = 2/5) */}
           <div className="lg:col-span-2">
-            <PhoneControls serial={selectedSerial} />
+            <PhoneControls serial={selectedSerial} apiKey={apiKey} />
           </div>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <div className="text-gray-400 text-4xl mb-4">📱</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Device Selected
+            未选择设备
           </h3>
           <p className="text-sm text-gray-500">
             {loadingDevices
-              ? 'Loading devices...'
+              ? '加载设备中...'
               : devices.length === 0
-              ? 'No devices found. Connect a device via USB or WiFi first.'
-              : 'Select a device from the dropdown above to start controlling it.'}
+              ? '未找到设备。请先通过 USB 或 WiFi 连接设备。'
+              : '从上方下拉菜单选择设备开始控制。'}
           </p>
         </div>
       )}

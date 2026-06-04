@@ -1,5 +1,5 @@
 /**
- * Dashboard Page
+ * Dashboard Page - Chinese Version
  */
 
 import React, { useEffect, useState } from 'react';
@@ -33,81 +33,60 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">📊 仪表盘</h1>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title="Total Devices"
+          title="设备总数"
           value={devices.length}
-          subtitle={`${onlineDevices} online`}
+          subtitle={`${onlineDevices} 在线`}
           color="blue"
         />
         <StatCard
-          title="Total Tasks"
+          title="任务总数"
           value={tasks.length}
-          subtitle={`${runningTasks} running`}
+          subtitle={`${runningTasks} 运行中`}
           color="green"
         />
         <StatCard
-          title="Success Rate"
-          value={statistics ? `${statistics.success_rate}%` : 'N/A'}
-          subtitle={`${statistics?.completed || 0} completed`}
+          title="成功率"
+          value={statistics ? `${statistics.success_rate || 0}%` : '-'}
+          subtitle="任务完成率"
           color="purple"
         />
         <StatCard
-          title="Avg Duration"
-          value={statistics?.avg_duration_seconds 
-            ? `${Math.round(statistics.avg_duration_seconds)}s`
-            : 'N/A'
-          }
-          subtitle="per task"
-          color="orange"
+          title="系统状态"
+          value="正常"
+          subtitle="所有服务运行中"
+          color="emerald"
         />
       </div>
 
-      {/* Recent Devices */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Devices</h2>
-        <div className="space-y-3">
-          {devices.slice(0, 5).map((device) => (
-            <div
-              key={device.serial}
-              className="flex justify-between items-center p-3 bg-gray-50 rounded"
-            >
-              <div>
-                <p className="font-medium">{device.model || device.serial}</p>
-                <p className="text-sm text-gray-500">{device.serial}</p>
-              </div>
-              <StatusBadge status={device.status} />
-            </div>
-          ))}
-          {devices.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No devices connected</p>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Tasks */}
+      {/* Recent Activity */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Tasks</h2>
+        <h2 className="text-lg font-semibold mb-4">最近活动</h2>
         <div className="space-y-3">
           {tasks.slice(0, 5).map((task) => (
-            <div
-              key={task.task_id}
-              className="flex justify-between items-center p-3 bg-gray-50 rounded"
-            >
+            <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">{task.name}</p>
-                <p className="text-sm text-gray-500">
-                  {new Date(task.created_at).toLocaleDateString()}
-                </p>
+                <p className="text-sm text-gray-500">{task.device_serial}</p>
               </div>
-              <StatusBadge status={task.status} />
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                task.status === 'running' ? 'bg-blue-100 text-blue-800' :
+                task.status === 'failed' ? 'bg-red-100 text-red-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {task.status === 'completed' ? '已完成' :
+                 task.status === 'running' ? '运行中' :
+                 task.status === 'failed' ? '失败' : '等待中'}
+              </span>
             </div>
           ))}
           {tasks.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No tasks created</p>
+            <p className="text-center text-gray-500 py-4">暂无活动记录</p>
           )}
         </div>
       </div>
@@ -116,28 +95,24 @@ const DashboardPage: React.FC = () => {
 };
 
 // Stat Card Component
-interface StatCardProps {
+const StatCard: React.FC<{
   title: string;
   value: string | number;
   subtitle: string;
-  color: 'blue' | 'green' | 'purple' | 'orange';
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, color }) => {
-  const colorClasses = {
+  color: string;
+}> = ({ title, value, subtitle, color }) => {
+  const colorClasses: Record<string, string> = {
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     purple: 'bg-purple-500',
-    orange: 'bg-orange-500',
+    emerald: 'bg-emerald-500',
   };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center">
         <div className={`w-12 h-12 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
-          <span className="text-white text-xl font-bold">
-            {typeof value === 'number' ? value : value.charAt(0)}
-          </span>
+          <span className="text-white text-xl">📱</span>
         </div>
         <div className="ml-4">
           <p className="text-sm text-gray-500">{title}</p>
@@ -146,40 +121,6 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, color }) =>
         </div>
       </div>
     </div>
-  );
-};
-
-// Status Badge Component
-interface StatusBadgeProps {
-  status: string;
-}
-
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online':
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'offline':
-      case 'pending':
-        return 'bg-gray-100 text-gray-800';
-      case 'running':
-      case 'busy':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      case 'paused':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(status)}`}>
-      {status}
-    </span>
   );
 };
 

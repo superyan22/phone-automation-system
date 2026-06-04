@@ -1,7 +1,7 @@
 """
 Main FastAPI application
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
@@ -50,7 +50,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:80",
     "http://127.0.0.1:3000",
-    "https://yan3321.github.io",  # GitHub Pages frontend (set via GITHUB_PAGES_URL env var in production)
+    "https://superyan22.github.io",  # GitHub Pages frontend
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -106,14 +106,48 @@ async def health():
     return health_status
 
 
-# Import and include routers
-from app.api.routes import devices, tasks, websocket, phone
+from app.core.security import verify_api_key, should_skip_auth, get_api_key
 
-app.include_router(devices.router, prefix="/api/v1")
-app.include_router(tasks.router, prefix="/api/v1")
-app.include_router(websocket.router)
+# Import and include routers
+from app.api.routes import devices, tasks, websocket
+from app.api.routes import publish, phone
+
+app.include_router(devices.router, prefix="/api/v1", tags=["devices"])
+app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
+app.include_router(websocket.router, tags=["websocket"])
+app.include_router(publish.router)
 app.include_router(phone.router)
 
+
+# Authentication middleware
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    """Add API key authentication for protected routes."""
+    path = request.url.path
+    
+    # Skip auth for health check and docs
+    if should_skip_auth(path):
+        return await call_next(request)
+    
+    # Check API key header
+    api_key = request.headers.get("X-API-Key")
+    if not api_key:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Missing API Key. Include 'X-API-Key' header."}
+        )
+    
+    from app.core.security import API_KEY
+    import secrets
+    if not secrets.compare_digest(api_key, API_KEY):
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Invalid API Key"}
+        )
+    
+    return await call_next(request)
+
+from fastapi.responses import JSONResponse
 
 if __name__ == "__main__":
     uvicorn.run(

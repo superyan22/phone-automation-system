@@ -20,11 +20,11 @@ interface TaskState {
   fetchTask: (taskId: string) => Promise<void>;
   createTask: (params: TaskCreateParams) => Promise<Task>;
   updateTask: (taskId: string, params: Partial<Task>) => Promise<void>;
-  deleteTask: (taskId: string) => Promise<void>;
-  startTask: (taskId: string) => Promise<void>;
+  deleteTask: (taskId: string | number) => Promise<void>;
+  startTask: (taskId: string | number) => Promise<void>;
   pauseTask: (taskId: string) => Promise<void>;
   resumeTask: (taskId: string) => Promise<void>;
-  cancelTask: (taskId: string) => Promise<void>;
+  cancelTask: (taskId: string | number) => Promise<void>;
   selectTask: (taskId: string) => void;
   updateTaskProgress: (taskId: string, progress: number, currentStep: number) => void;
   updateTaskStatus: (taskId: string, status: TaskStatus) => void;
@@ -104,7 +104,7 @@ export const useTaskStore = create<TaskState>()(
       },
 
       // Delete task
-      deleteTask: async (taskId: string) => {
+      deleteTask: async (taskId: string | number) => {
         try {
           await apiService.deleteTask(taskId);
           set((state) => ({
@@ -120,7 +120,7 @@ export const useTaskStore = create<TaskState>()(
       },
 
       // Start task
-      startTask: async (taskId: string) => {
+      startTask: async (taskId: string | number) => {
         try {
           await apiService.startTask(taskId);
           set((state) => ({
@@ -168,7 +168,7 @@ export const useTaskStore = create<TaskState>()(
       },
 
       // Cancel task
-      cancelTask: async (taskId: string) => {
+      cancelTask: async (taskId: string | number) => {
         try {
           await apiService.cancelTask(taskId);
           set((state) => ({
