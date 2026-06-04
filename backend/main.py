@@ -93,7 +93,8 @@ async def health():
     # Check Redis
     try:
         import redis.asyncio as aioredis
-        r = aioredis.from_url(settings.REDIS_URL)
+        # Try to connect with the configured URL
+        r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
         await r.ping()
         await r.close()
         health_status["checks"]["redis"] = "healthy"

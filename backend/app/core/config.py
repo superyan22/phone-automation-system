@@ -18,7 +18,11 @@ class Settings(BaseSettings):
     DATABASE_ECHO: bool = False
     
     # Redis
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = ""
+    REDIS_DB: int = 0
+    REDIS_URL: str = ""  # Auto-generated if empty
     
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -50,6 +54,13 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Auto-generate REDIS_URL from components if empty
+if not settings.REDIS_URL:
+    if settings.REDIS_PASSWORD:
+        settings.REDIS_URL = f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
+    else:
+        settings.REDIS_URL = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/{settings.REDIS_DB}"
 
 # Auto-fix DATABASE_URL for async driver
 if settings.DATABASE_URL.startswith("postgresql://"):
