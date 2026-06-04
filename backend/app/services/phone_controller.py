@@ -98,8 +98,8 @@ class PhoneController:
             Base64 encoded PNG image
         """
         try:
-            # Execute screencap command
-            success, output = await adb_manager.execute_command(
+            # Execute screencap command (binary output)
+            success, output = await adb_manager._execute_adb_command_binary(
                 serial, "shell screencap -p"
             )
             
@@ -107,12 +107,11 @@ class PhoneController:
                 logger.error(f"Screencap failed: {output}")
                 return None
                 
-            # Convert to base64
-            image_data = output.encode('utf-8')
-            # Fix potential line ending issues
-            image_data = image_data.replace(b'\r\n', b'\n')
+            # Fix potential line ending issues (CR LF -> LF)
+            if isinstance(output, bytes):
+                output = output.replace(b'\r\n', b'\n')
             
-            return base64.b64encode(image_data).decode('utf-8')
+            return base64.b64encode(output).decode('utf-8')
             
         except Exception as e:
             logger.error(f"Screencap error: {e}")

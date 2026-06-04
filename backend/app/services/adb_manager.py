@@ -77,10 +77,15 @@ class ADBManager:
                 pass
         logger.info("ADB Manager stopped")
         
-    async def _run_adb_command(self, args: List[str], timeout: int = 30) -> tuple:
+    async def _run_adb_command(self, args: List[str], timeout: int = 30, binary: bool = False) -> tuple:
         """
         Run ADB command
         
+        Args:
+            args: Command arguments
+            timeout: Command timeout
+            binary: If True, return raw bytes instead of decoded string
+            
         Returns:
             Tuple of (return_code, stdout, stderr)
         """
@@ -95,12 +100,14 @@ class ADBManager:
                 process.communicate(),
                 timeout=timeout
             )
+            if binary:
+                return process.returncode, stdout, stderr.decode()
             return process.returncode, stdout.decode(), stderr.decode()
         except asyncio.TimeoutError:
             process.kill()
-            return -1, "", "Command timed out"
+            return -1, b"" if binary else "", "Command timed out"
         except Exception as e:
-            return -1, "", str(e)
+            return -1, b"" if binary else "", str(e)
             
     async def _execute_adb_command(self, serial: str, command: str, timeout: int = 30) -> tuple:
         """
@@ -112,6 +119,17 @@ class ADBManager:
         args = ["-s", serial] + command.split()
         returncode, stdout, stderr = await self._run_adb_command(args, timeout)
         return returncode == 0, stdout if returncode == 0 else stderr
+        
+    async def _execute_adb_command_binary(self, serial: str, command: str, timeout: int = 30) -> tuple:
+        """
+        Execute ADB command that returns binary data
+        
+        Returns:
+            Tuple of (success, output_bytes)
+        """
+        args = ["-s", serial] + command.split()
+        returncode, stdout, stderr = await self._run_adb_command(args, timeout, binary=True)
+        return returncode == 0, stdout if returncode == 0 else stderr.encode()
         
     # ========== Device Discovery ==========
     

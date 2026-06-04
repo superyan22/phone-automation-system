@@ -232,6 +232,7 @@ async def connect_device(
     """
     from sqlalchemy import select
     from datetime import datetime
+    from app.services.adb_manager import adb_manager, DeviceInfo, DeviceStatus
     
     query = select(Device).where(Device.serial == serial)
     result = await db.execute(query)
@@ -240,7 +241,17 @@ async def connect_device(
     if not device:
         raise HTTPException(status_code=404, detail=f"Device not found: {serial}")
     
-    # TODO: Implement actual ADB connection logic
+    # Register device with ADB manager
+    device_info = DeviceInfo(
+        serial=serial,
+        device_type=device.device_type,
+        ip_address=device.ip_address,
+        port=device.port,
+        status=DeviceStatus.ONLINE
+    )
+    adb_manager.devices[serial] = device_info
+    
+    # Update database
     device.status = "online"
     device.is_connected = True
     device.connected_at = datetime.utcnow()
@@ -336,6 +347,7 @@ async def get_screenshot(
     Returns base64 encoded image
     """
     from sqlalchemy import select
+    from app.services.phone_controller import phone_controller
     
     query = select(Device).where(Device.serial == serial)
     result = await db.execute(query)
@@ -344,5 +356,12 @@ async def get_screenshot(
     if not device:
         raise HTTPException(status_code=404, detail=f"Device not found: {serial}")
     
-    # TODO: Implement actual screenshot capture
-    return {"image": "base64_encoded_image_placeholder", "format": format}
+    # Take screenshot using phone controller
+    try:
+        image_base64 = await phone_controller.take_screenshot(serial)
+        if image_base64:
+            return {"image": image_base64, "format": format}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to capture screenshot")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Screenshot error: {str(e)}")

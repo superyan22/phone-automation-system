@@ -1,5 +1,4 @@
 # docker-compose.yml
-version: '3.8'
 
 services:
   # Backend service
@@ -12,10 +11,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-***}@postgres:5432/${POSTGRES_DB:-phone_automation}
-      - REDIS_URL=redis://redis:${REDIS_PASSWORD:-***}@redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:${REDIS_PASSWORD:-***}@redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PASSWORD:-***}@redis:6379/2
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/${POSTGRES_DB:-phone_automation}
+      - REDIS_URL=redis://redis:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:${REDIS_PASSWORD:-redis123}@redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PASSWORD:-redis123}@redis:6379/2
+      - ADB_PATH=/usr/bin/adb
     volumes:
       - backend_data:/app/data
       - ./backend:/app
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-***}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres123}
       - POSTGRES_DB=${POSTGRES_DB:-phone_automation}
     ports:
       - "5432:5432"
@@ -60,54 +60,13 @@ services:
     image: redis:7-alpine
     container_name: phone-automation-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-***}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123}
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - app-network
-
-  # Celery worker
-  celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: phone-automation-celery-worker
-    restart: unless-stopped
-    command: celery -A app.core.celery worker --loglevel=info
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-***}@postgres:5432/${POSTGRES_DB:-phone_automation}
-      - REDIS_URL=redis://redis:${REDIS_PASSWORD:-***}@redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:${REDIS_PASSWORD:-***}@redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PASSWORD:-***}@redis:6379/2
-    volumes:
-      - backend_data:/app/data
-      - ./backend:/app
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - app-network
-
-  # pgAdmin (optional, for database management)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: phone-automation-pgadmin
-    restart: unless-stopped
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres
-    networks:
-      - app-network
-    profiles:
-      - debug  # Only enable in debug mode
 
 # Data volumes
 volumes:
@@ -116,8 +75,6 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
-    driver: local
-  pgadmin_data:
     driver: local
 
 # Networks
