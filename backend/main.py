@@ -50,6 +50,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:80",
     "http://127.0.0.1:3000",
+    "https://yan3321.github.io",  # GitHub Pages frontend (set via GITHUB_PAGES_URL env var in production)
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -106,11 +107,12 @@ async def health():
 
 
 # Import and include routers
-from app.api.routes import devices, tasks, websocket
+from app.api.routes import devices, tasks, websocket, phone
 
 app.include_router(devices.router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(websocket.router)
+app.include_router(phone.router)
 
 
 if __name__ == "__main__":
