@@ -1,29 +1,20 @@
 # docker-compose.yml
 
 services:
-  # Backend service
+  # Backend service - 使用host网络访问宿主机ADB
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: phone-automation-backend
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    network_mode: host
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/${POSTGRES_DB:-phone_automation}
-      - REDIS_URL=redis://redis:${REDIS_PASSWORD:-redis123}@redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:${REDIS_PASSWORD:-redis123}@redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:${REDIS_PASSWORD:-redis123}@redis:6379/2
+      - DATABASE_URL=postgresql+asyncpg://postgres:***@localhost:5432/phone_automation
+      - REDIS_URL=redis://***@localhost:6379/0
+      - CELERY_BROKER_URL=redis://***@localhost:6379/1
+      - CELERY_RESULT_BACKEND=redis://***@localhost:6379/2
       - ADB_PATH=/usr/bin/adb
-    volumes:
-      - backend_data:/app/data
-      - ./backend:/app
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - app-network
 
   # Frontend service
   frontend:
@@ -45,9 +36,8 @@ services:
     container_name: phone-automation-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres123}
-      - POSTGRES_DB=${POSTGRES_DB:-phone_automation}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=***      - POSTGRES_DB=phone_automation
     ports:
       - "5432:5432"
     volumes:
@@ -60,7 +50,7 @@ services:
     image: redis:7-alpine
     container_name: phone-automation-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123}
+    command: redis-server --requirepass redis123
     ports:
       - "6379:6379"
     volumes:
@@ -70,8 +60,6 @@ services:
 
 # Data volumes
 volumes:
-  backend_data:
-    driver: local
   postgres_data:
     driver: local
   redis_data:
@@ -81,6 +69,3 @@ volumes:
 networks:
   app-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

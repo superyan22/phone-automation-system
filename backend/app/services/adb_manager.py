@@ -109,6 +109,58 @@ class ADBManager:
         except Exception as e:
             return -1, b"" if binary else "", str(e)
             
+    # Allowed ADB commands whitelist for security
+    ALLOWED_ADB_COMMANDS = {
+        "devices", "shell", "push", "pull", "install", "uninstall",
+        "start-server", "kill-server", "reconnect", "get-state",
+        "get-serialno", "get-devpath", "remount", "reboot", "reboot-bootloader",
+    }
+    
+    def _validate_adb_command(self, command: str) -> List[str]:
+        """
+        Validate and parse ADB command safely.
+        
+        Only allows whitelisted commands to prevent injection attacks.
+        
+        Args:
+            command: Raw command string
+            
+        Returns:
+            List of validated command arguments
+            
+        Raises:
+            ValueError: If command is not allowed
+        """
+        import shlex
+        
+        try:
+            # Use shlex for safe parsing (handles quotes, escapes)
+            parts = shlex.split(command)
+        except ValueError as e:
+            raise ValueError(f"Invalid command syntax: {e}")
+        
+        if not parts:
+            raise ValueError("Empty command")
+        
+        # Check if base command is allowed
+        base_cmd = parts[0].lower()
+        if base_cmd not in self.ALLOWED_ADB_COMMANDS:
+            raise ValueError(
+                f"Command '{base_cmd}' not allowed. "
+                f"Allowed: {', '.join(sorted(self.ALLOWED_ADB_COMMANDS))}"
+            )
+        
+        # For shell commands, validate the shell command too
+        if base_cmd == "shell" and len(parts) > 1:
+            shell_cmd = parts[1].lower()
+            # Block dangerous shell commands
+            blocked_patterns = ["rm ", "mkfs", "dd ", "format", "> /dev"]
+            for pattern in blocked_patterns:
+                if pattern in shell_cmd:
+                    raise ValueError(f"Dangerous shell command blocked: {pattern}")
+        
+        return parts
+    
     async def _execute_adb_command(self, serial: str, command: str, timeout: int = 30) -> tuple:
         """
         Execute ADB command on specific device
@@ -116,10 +168,11 @@ class ADBManager:
         Returns:
             Tuple of (success, output)
         """
-        args = ["-s", serial] + command.split()
+        validated_args = self._validate_adb_command(command)
+        args = ["-s", serial] + validated_args
         returncode, stdout, stderr = await self._run_adb_command(args, timeout)
         return returncode == 0, stdout if returncode == 0 else stderr
-        
+    
     async def _execute_adb_command_binary(self, serial: str, command: str, timeout: int = 30) -> tuple:
         """
         Execute ADB command that returns binary data
@@ -127,7 +180,8 @@ class ADBManager:
         Returns:
             Tuple of (success, output_bytes)
         """
-        args = ["-s", serial] + command.split()
+        validated_args = self._validate_adb_command(command)
+        args = ["-s", serial] + validated_args
         returncode, stdout, stderr = await self._run_adb_command(args, timeout, binary=True)
         return returncode == 0, stdout if returncode == 0 else stderr.encode()
         

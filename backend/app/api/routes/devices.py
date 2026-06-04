@@ -4,8 +4,9 @@ Device routes
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
+import re
 
 from app.core.database import get_db
 from app.models.device import Device
@@ -16,11 +17,18 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 # ========== Request/Response Models ==========
 
 class DeviceBase(BaseModel):
-    serial: str
-    device_type: str
-    ip_address: Optional[str] = None
-    port: int = 5555
-    config: dict = {}
+    serial: str = Field(..., min_length=1, max_length=100, pattern=r'^[a-zA-Z0-9:.\-_]+$')
+    device_type: str = Field(..., pattern=r'^(usb|wifi|emulator)$')
+    ip_address: Optional[str] = Field(None, pattern=r'^(\d{1,3}\.){3}\d{1,3}$')
+    port: int = Field(default=5555, ge=1, le=65535)
+    config: dict = Field(default_factory=dict)
+    
+    @field_validator('config')
+    @classmethod
+    def validate_config(cls, v):
+        if len(v) > 50:  # Limit config size
+            raise ValueError('Config too large (max 50 keys)')
+        return v
 
 
 class DeviceCreate(DeviceBase):
@@ -28,9 +36,16 @@ class DeviceCreate(DeviceBase):
 
 
 class DeviceUpdate(BaseModel):
-    ip_address: Optional[str] = None
-    port: Optional[int] = None
+    ip_address: Optional[str] = Field(None, pattern=r'^(\d{1,3}\.){3}\d{1,3}$')
+    port: Optional[int] = Field(None, ge=1, le=65535)
     config: Optional[dict] = None
+    
+    @field_validator('config')
+    @classmethod
+    def validate_config(cls, v):
+        if v is not None and len(v) > 50:
+            raise ValueError('Config too large (max 50 keys)')
+        return v
 
 
 class DeviceResponse(DeviceBase):
@@ -58,7 +73,25 @@ class DeviceListResponse(BaseModel):
 
 
 class DeviceCommandRequest(BaseModel):
-    command: str
+    command: str = Field(..., min_length=1, max_length=500)
+    args: List[str] = Field(default_factory=list, max_length=50)
+    
+    @field_validator('command')
+    @classmethod
+    def validate_command(cls, v):
+        if not re.match(r'^[a-zA-Z0-9\-_]+$', v):
+            raise ValueError('Invalid command format')
+        return v
+    
+    @field_validator('args')
+    @classmethod
+    def validate_args(cls, v):
+        for arg in v:
+            if len(arg) > 200:
+                raise ValueError('Argument too long (max 200 chars)')
+            if any(c in arg for c in [';', '|', '&', '`', '$']):
+                raise ValueError('Invalid character in argument')
+        return v
     args: List[str] = []
     timeout: int = 30
 
@@ -105,7 +138,10 @@ async def list_devices(
         count_query = count_query.where(Device.device_type == device_type)
     
     if search:
-        search_filter = Device.serial.ilike(f"%{search}%") | Device.model.ilike(f"%{search}%")
+        # Sanitize search input - escape special SQL characters
+        sanitized_search = search.replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{sanitized_search}%"
+        search_filter = Device.serial.ilike(search_pattern) | Device.model.ilike(search_pattern)
         query = query.where(search_filter)
         count_query = count_query.where(search_filter)
     

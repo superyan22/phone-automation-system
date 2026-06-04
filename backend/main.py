@@ -45,12 +45,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware - restrict origins for security
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:80",
+    "http://127.0.0.1:3000",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -67,8 +72,36 @@ async def root():
 
 @app.get("/health")
 async def health():
-    """Health check endpoint"""
-    return {"status": "healthy"}
+    """
+    Health check endpoint with dependency checks.
+    Returns status of database and Redis connectivity.
+    """
+    from sqlalchemy import text
+    from app.core.database import engine
+    
+    health_status = {"status": "healthy", "checks": {}}
+    
+    # Check database
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        health_status["checks"]["database"] = "healthy"
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["checks"]["database"] = f"unhealthy: {str(e)[:100]}"
+    
+    # Check Redis
+    try:
+        import redis.asyncio as aioredis
+        r = aioredis.from_url(settings.REDIS_URL)
+        await r.ping()
+        await r.close()
+        health_status["checks"]["redis"] = "healthy"
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["checks"]["redis"] = f"unhealthy: {str(e)[:100]}"
+    
+    return health_status
 
 
 # Import and include routers
